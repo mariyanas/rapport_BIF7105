@@ -1,0 +1,199 @@
+---
+title: " Analyse d’expression différentielle pour un séquençage de l’ARN avec edgeR"
+author: "-"
+date: "12 décembre 2025"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    fig_caption: true
+bibliography: references.bib 
+csl: vancouver.csl
+link-citations: true
+toc-title: "Table des matières"
+---
+  
+<!-- 
+Révision critique d'un outil bioinformatique (ou package R): description de 
+l'application et des jeux de données, de la problématique, des tests d'hypothèses 
+et de la méthode statistique. Inclusion d'un exemple pratique.
+-->
+
+# Résumé
+<!-- 
+Un résumé de votre étude (1/2 page) 
+-->
+
+# Introduction
+<!-- 
+Une introduction avec les références pertinentes (1 page)
+-->
+<!-- 
+- l’utilisation du package R edgeR pour l’identification de gènes différemment 
+  exprimes entre deux classes de spécimen
+- L’utilisation du package et les modèles statistiques utilisées pour la 
+  normalisation des échantillons et l’analyse des différences d’expression 
+  seront présentées. 
+-->
+Le séquençage de l'ARN (*RNA-seq*) est une méthode permettant de séquencer un 
+ensemble de molécules d'ARN. Le séquençage d'ARN est utilisé pour 
+déterminer quels segments d'ADN ont été transcrits en ARN et la quantité 
+un gène est exprimé, afin de mieux comprendre la fonction des différents gènes [@RNA-seq].
+
+[**edgeR**](https://bioconductor.org/packages/release/bioc/html/edgeR.html) est un 
+package R conçu pour l'analyse d'expression différentielle des données 
+de « *RNA-seq count* ». Il peut détecter des différences entre deux 
+groupes ou plus quand au moins un des groupes a effectué des mesures répétées [@edgeRInfo].
+
+
+# Méthodologie
+<!-- 
+Méthodologie (2 à 3 pages)
+-->
+## Introduction
+
+## Téléchargement des données
+Nous commonçons par charger les *libraries* pertinentes.
+```{r message=FALSE}
+library(org.Hs.eg.db)
+library(limma)
+library(edgeR)
+```
+
+data taken from: https://www.doi.org
+```{r}
+rawdata <- read.delim("TableS1.txt", check.names = FALSE, stringsAsFactors = FALSE)
+head(rawdata)
+```
+
+## Création d'un *DGEList object*
+
+* create a DGEList object (https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/DGEList) to hold our read counts 
+- This object is used as a container for the counts, and for all the associated metadata eg. sample names, gene names and normalisation factors
+```{r}
+y <- DGEList(counts=rawdata[,4:9], genes=rawdata[,1:3])
+```
+
+## Annotation
+
+```{r}
+idfound <- y$genes$RefSeqID %in% mappedRkeys(org.Hs.egREFSEQ)
+y <- y[idfound,]
+dim(y)
+```
+
+```{r}
+egREFSEQ <- toTable(org.Hs.egREFSEQ)
+head(egREFSEQ)
+m <- match(y$genes$RefSeqID, egREFSEQ$accession)
+y$genes$EntrezGene <- egREFSEQ$gene_id[m]
+```
+
+```{r}
+egSYMBOL <- toTable(org.Hs.egSYMBOL)
+head(egSYMBOL)
+m <- match(y$genes$EntrezGene, egSYMBOL$gene_id)
+y$genes$Symbol <- egSYMBOL$symbol[m]
+head(y$genes)
+```
+
+## Filtrage des gènes 
+```{r}
+o <- order(rowSums(y$counts))
+y <- y[o,]
+d <- duplicated(y$genes$Symbol)
+y <- y[!d,]
+nrow(y)
+```
+
+```{r}
+y$samples$lib.size <- colSums(y$counts)
+```
+
+```{r}
+rownames(y$counts) <- rownames(y$genes) <- y$genes$EntrezGene
+y$genes$EntrezGene <- NULL
+```
+
+## Normalisation
+
+```{r}
+y <- normLibSizes(y)
+y$samples
+```
+
+# Résultats et discussions
+<!-- 
+Résultats et discussions (2 à 3 pages)
+-->
+
+## Data exploration
+```{r}
+plotMDS(y)
+```
+
+## Design matrix
+```{r}
+Patient <- factor(c(8,8,33,33,51,51))
+Tissue <- factor(c("N","T","N","T","N","T"))
+data.frame(Sample=colnames(y),Patient,Tissue)
+
+design <- model.matrix(~Patient+Tissue)
+rownames(design) <- colnames(y)
+design
+```
+
+## Dispersion Estimation
+```{r}
+y <- estimateDisp(y, design, robust=TRUE)
+y$common.dispersion
+
+plotBCV(y)
+```
+
+## Differential expression
+```{r}
+fit <- glmFit(y, design)
+```
+
+```{r}
+lrt <- glmLRT(fit)
+topTags(lrt)
+```
+
+```{r}
+colnames(design)
+```
+
+```{r}
+o <- order(lrt$table$PValue)
+cpm(y)[o[1:10],]
+```
+
+```{r}
+summary(decideTests(lrt))
+
+plotMD(lrt)
+abline(h=c(-1, 1), col="blue")
+```
+
+## Gene Ontology Analysis
+```{r}
+go <- goana(lrt)
+topGO(go, ont="BP", sort="Up", n=15, truncate=45)
+```
+
+# Conclusion
+<!-- 
+Conclusion (1/2 page)
+-->
+
+# Références
+<!-- 
+Références en écartant les références de  Wikipedia (1 page maximum)
+-->
+---
+nocite: '@*'
+...
+
