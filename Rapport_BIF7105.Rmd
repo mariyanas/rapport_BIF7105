@@ -29,6 +29,12 @@ et de la méthode statistique. Inclusion d'un exemple pratique.
 <!-- 
 Un résumé de votre étude (1/2 page) 
 -->
+edgeR peut être utilisé pour l'identification des gènes exprimés différemment.
+Nous allons procéder à une analyse des données issues d'une expérience de 
+« *paired design RNA-seq* » de tissus tumoraux et non tumoraux (normaux). Nous ferons 
+référence à une étude [@oralCarcinoma] portant sur des carcinomes épidermoïdes buccaux et des 
+tissus normaux correspondants provenant de trois patients. Nous utiliserons edgeR 
+pour détecter les gènes dont l'expression diffère entre ces deux types de tissus.
 
 # Introduction
 <!-- 
