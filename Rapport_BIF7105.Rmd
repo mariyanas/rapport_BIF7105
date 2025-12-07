@@ -166,20 +166,19 @@ Résultats et discussions (2 à 3 pages)
 Nous voulons voir s'il existe des valeurs aberrantes ou d'autres corrélations 
 dans notre échantillon. La fonction `plotMDS` produit un plot dans lequel les 
 distances entre les échantillons représentent approximativement les différences d'expression [@plotMDS].
-```{r}
+```{r, out.width = "70%", fig.align='center'}
 plotMDS(y)
 ```
 
 ## Design matrix
 Ensuite, nous voulons tester l'expression différentielle entre les tissus 
 tumoraux et les tissus normaux chez les patients.
-
-
 ```{r}
 Patient <- factor(c(8, 8, 33, 33, 51, 51))
 Tissue <- factor(c("N", "T", "N", "T", "N", "T"))
 data.frame(Sample = colnames(y), Patient, Tissue)
 ```
+
 
 ```{r}
 design <- model.matrix(~Patient+Tissue)
@@ -187,20 +186,30 @@ rownames(design) <- colnames(y)
 design
 ```
 
-## Dispersion Estimation
+## Estimation de la dispersion
+Pour comprendre la variabilité biologique, nous estimons la dispersion globale du *dataset*.
 ```{r fig.width = 4, fig.height = 4}
-y <- estimateDisp(y, design, robust=TRUE)
+y <- estimateDisp(y, design, robust = TRUE)
 y$common.dispersion
+```
+La racine carrée du *common dispersion*, `0.1613`, nous donne le BCV (biological coefficient of variation), `0.402`.
+```{r, out.width = "65%", fig.align='center'}
 plotBCV(y)
 ```
 
+
 ## Differential expression
+Nous utilison la fonction `glmFit` (fits negative binomial generalized log-linear model to each genes read count.)
 ```{r}
 fit <- glmFit(y, design)
 ```
-
-```{r fig.width = 3, fig.height = 4}
+Ensuite, la fonction `glmLRT` est utilisée pour effecturer des 
+*likelihood ratio tests* pour les différences entre le tissu tumoral et le tissu normal.
+```{r}
 lrt <- glmLRT(fit)
+```
+Nous utilisons la fonction `topTags` pour voir les résultats.
+```{r}
 topTags(lrt)
 ```
 
@@ -213,7 +222,7 @@ o <- order(lrt$table$PValue)
 cpm(y)[o[1:10],]
 ```
 
-```{r}
+```{r, out.width = "75%", fig.align='center'}
 summary(decideTests(lrt))
 plotMD(lrt)
 abline(h=c(-1, 1), col="blue")
