@@ -179,6 +179,15 @@ plotMDS(y)
 ```
 
 ## Matrice de design
+## Analyse des données
+Nous voulons voir s'il existe des valeurs aberrantes ou d'autres corrélations 
+dans notre échantillon. La fonction `plotMDS` produit un plot dans lequel les 
+distances entre les échantillons représentent approximativement les différences d'expression [@plotMDS].
+```{r, out.width = "70%", fig.align='center'}
+plotMDS(y)
+```
+
+## Design matrix
 Ensuite, nous voulons tester l'expression différentielle entre les tissus 
 tumoraux et les tissus normaux chez les patients.
 ```{r}
@@ -194,7 +203,7 @@ rownames(design) <- colnames(y)
 design
 ```
 
-## Dispersion BN des données
+## Estimation de la dispersion
 Pour comprendre la variabilité biologique, nous estimons la dispersion globale du *dataset*.
 ```{r fig.width = 4, fig.height = 4}
 y <- estimateDisp(y, design, robust = TRUE)
@@ -204,12 +213,12 @@ La racine carrée du *common dispersion*, `0.1613`, nous donne le BCV (biologica
 ```{r}
 sqrt(y$common.dispersion) # BCV
 ```
-```{r, plot2, fig.cap, out.width = "65%", fig.align='center'}
+```{r plot2, fig.cap = "", out.width = "65%", fig.align='center'}
 plotBCV(y)
 ```
 
 
-## Expression differential des gènes
+## Differential expression
 Nous utilison la fonction `glmFit` (fits negative binomial generalized log-linear model to each genes read count.)
 ```{r}
 fit <- glmFit(y, design)
