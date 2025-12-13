@@ -1,52 +1,36 @@
 ---
-title: "Analyse d’expression différentielle pour un séquençage de l’ARN avec edgeR"
+title: " Analyse d’expression différentielle pour un séquençage de l’ARN avec edgeR"
 author: "-"
 date: "12 décembre 2025"
 output:
-  bookdown::pdf_document2:
+  pdf_document:
     toc: true
     toc_depth: 2
     number_sections: true
     fig_caption: true
+fontsize: 12pt
 bibliography: references.bib 
 csl: vancouver.csl
 link-citations: true
 toc-title: "Table des matières"
 ---
+```{r set-options, echo=FALSE, cache=FALSE, warning=FALSE}
+library(kableExtra)
+library(magrittr)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.pos = "H")
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-options(width = 100)
 ```
 
 <!-- 
 Révision critique d'un outil bioinformatique (ou package R): description de 
 l'application et des jeux de données, de la problématique, des tests d'hypothèses 
 et de la méthode statistique. Inclusion d'un exemple pratique.
--->
-
+-->  
+\newpage  
 # Résumé
 <!-- 
 Un résumé de votre étude (1/2 page) 
--->
-edgeR peut être utilisé pour l'identification des gènes exprimés différemment.
-Nous allons procéder à une analyse des données issues d'une expérience de 
-« *paired design RNA-seq* » de tissus tumoraux et non tumoraux (normaux). Nous ferons 
-référence à une étude [@oralCarcinoma] portant sur des carcinomes épidermoïdes buccaux et des 
-tissus normaux correspondants provenant de trois patients. Nous utiliserons edgeR 
-pour détecter les gènes dont l'expression diffère entre ces deux types de tissus.
-
-# Introduction
-<!-- 
-Une introduction avec les références pertinentes (1 page)
--->
-<!-- 
-- l’utilisation du package R edgeR pour l’identification de gènes différemment 
-  exprimes entre deux classes de spécimen
-- L’utilisation du package et les modèles statistiques utilisées pour la 
-  normalisation des échantillons et l’analyse des différences d’expression 
-  seront présentées. 
--->
+-->  
 Le séquençage de l'ARN (*RNA-seq*) est une méthode permettant de séquencer un 
 ensemble de molécules d'ARN. Le séquençage d'ARN est utilisé pour 
 déterminer quels segments d'ADN ont été transcrits en ARN et la quantité 
@@ -57,75 +41,88 @@ package R conçu pour l'analyse d'expression différentielle des données
 de « *RNA-seq count* ». Il peut détecter des différences entre deux 
 groupes ou plus quand au moins un des groupes a effectué des mesures répétées [@edgeRInfo].
 
+# Introduction  
+<!-- 
+Une introduction avec les références pertinentes (1 page)
+-->
+<!-- 
+- l’utilisation du package R edgeR pour l’identification de gènes différemment 
+  exprimes entre deux classes de spécimen
+- L’utilisation du package et les modèles statistiques utilisées pour la 
+  normalisation des échantillons et l’analyse des différences d’expression 
+  seront présentées. 
+-->
 
+L’arrivée du séquençage à haut débit, communément connu sous le nom de Next Generation Sequencing, a révolutionné les études génomiques et de biologie moléculaires. Il permet le séquençage rapide de millions de fragments d’ADN ou d’ARN simultanément, offrant des avancées significatives dans les domaines de l’analyse génomique et de transcriptomique. Une application spécifique du NGS est le séquençage d’ARN (RNA-seq) à haut débit, utilisée pour le profilage de l’expression des gènes et des transcrits. Avec la possibilité d’avoir un si grand nombre de fragments et de segments à analyser, il faut trouver une manière simple et efficace afin d’offrir un sens à ces données. Un tel outil qui permet cette analyse est le package *edgeR*.  
+  
+*EdgerR*, dont l’acronyme signifie Empirical analysis of Digital Gene Expression in R, est un outil puissant qui analyse les données issues du NGS. Il a originalement été conçu par MD Robinson, DJ McCarthy et GK Smyth en 2008. Il est un projet collaboratif dans la communauté Bioconductor où plusieurs autres chercheurs contribuent encore à son évolution et son bon fonctionnement (Yunshen Chen, Aaron Lun,...). Il se spécialise dans les analyses différentielles sur des données discrètes omiques qui produisent des comptes de fragments d’ARN ou d’ADN. Il est utilisé notamment pour la détection de gènes ou de traits qui ont changé de niveau d’abondance entre des types de cellules, des groupes expérimentaux et pour trouver la cause génomique de maladies.
+   
+*EdgeR* a été le premier outil à utiliser des modèles linéaires généralisés binomiaux négatifs (BN) afin de modéliser les comptages de lecture dans la recherche du génome. En effet, puisque ces derniers ont souvent une variance beaucoup plus grande que la moyenne, il faut un paramètre de dispersion qui permet la relation *variance > moyenne*. La régression BN est donc un meilleur modèle statistique pour analyser des données de comptages qui représentent une surdispersion. De plus, *edgeR* tient compte de deux variations dans les expérimentations de séquençage de l’ARN. La première est la variation biologique entre les différents groupes ou cellules échantillonnés qui suit une loi de Gamma. La deuxième, la variation technique, incluant les erreurs de mesure et de séquençage, qui suit une loi de Poisson. Ensemble, les comptages de lecture suivent une loi de Gamma-Poisson, c’est-à-dire une loi binomiale négative. 
+   
+Dans cette revue d'outil, les capacités de modélisation linéaires généralisés de *edgeR* seront démontrés avec une analyse différentielle d'expréssion de gènes entre des transcrits séquencés de cellules cancéreuses et de cellules normales issus du séquençage de l'ARN. L'utilisation du package ainsi que ses différentes fonctions et modèles statistiques pour la préparation de données et l'analyse différentielle seront présentés.  
+  
 # Méthodologie
 <!-- 
 Méthodologie (2 à 3 pages)
--->
-## Introduction
+-->  
+Pour démontrer les capacités de **edgeR** et de son utilisation de modèles linéaires généralisés pour l'analyse de données, deux types de tissus seront étudiés chez trois patients: les tissus carcinomes épidermoïdes buccaux et les tissus normaux qui leur correspondent. Ces données proviennent d'une expérience de séquençage d'ARN par paires entreprie par Tuch et al. (cite)  
+Le but de l'analyse est de trouver les gènes qui sont différentiellement exprimés entre les cellules cancéreuses et les cellules normales.  
 
 ## Téléchargement des données
 Nous commonçons par charger les *libraries* pertinentes.
 ```{r message=FALSE}
 library(org.Hs.eg.db)
-library(limma)
 library(edgeR)
 ```
 
-Les données sont téléchargées du [**DOI**](https://doi.org/10.1371/journal.pone.0009317.s009) (*the Digital Object Identifier*).
-Avant de lire les données, nous avons supprimé les colonnes qui n'étaient pas 
-pertinentes pour notre étude. Nous avons également renommé certaines colonnes 
-(`idRefSeq` à `RefSeqID`, `nameOfGene` à `Symbol`, `numberOfExons` à `NbrOfExons`).
+data taken from: https://www.doi.org
 ```{r}
 rawdata <- read.delim("TableS1.txt", check.names = FALSE, stringsAsFactors = FALSE)
-head(rawdata, 3)
+df <- summary(rawdata) 
+```   
+```{r, echo = FALSE}
+knitr::kable(df, format = "latex", booktabs = TRUE) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
 ```
+   
+## Création d'un *DGEList object*
 
-## Création d'un objet *DGEList*
-Nous stockerons nos données dans l'objet *DGEList* pour faciliter leur manipulation.
-Cet objet, conçu spécifiquement pour edgeR, peut être manipulé comme une liste. 
-*DGEList* est un structure de données qui comprend toutes les composantes nécessaires 
-(une matrice *counts* contenant les integer *counts*, un data-frame *samples* contenant 
-des informations sur les échantillons et les librairies, et un data-frame *genes* 
-contenant des annotations sur les gènes) dans un seul objet [@DGEList]. 
-
+* create a DGEList object (https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/DGEList) to hold our read counts 
+- This object is used as a container for the counts, and for all the associated metadata eg. sample names, gene names and normalisation factors
 ```{r}
-y <- DGEList(counts = rawdata[,4:9], genes = rawdata[,1:3])
+y <- DGEList(counts=rawdata[,4:9], genes=rawdata[,1:3])
+dim(y)
 ```
 
 ## Annotation
-L'étude [@oralCarcinoma] a été réalisée en 2010 ; par conséquent, certains des `RefSeqID`s
-ne sont plus utilisés. Nous filtrons les *RefSeq ID*s qui ne sont plus disponibles 
-dans l'annotation actuelle du [**NCBI**](https://www.ncbi.nlm.nih.gov) (fournie par le package `org.Hs.eg.db`). 
 
 ```{r}
+
 idfound <- y$genes$RefSeqID %in% mappedRkeys(org.Hs.egREFSEQ)
 y <- y[idfound,]
-dim(y) # 15534 sur 15668 RefSeqIDs sont retenus
+dim(y)
 ```
 
-*Entrez Gene ID*s sont les identifiants numériques uniques attribués aux 
-gènes par le NCBI [@EntrezGeneID]. Pour chaque gène, *Entrez Gene* donne des détails tels que
-le nom du gène et sa localisation chromosomique. Nous ajoutons les *Entrez Gene ID*s à l'annotation. 
 ```{r}
 egREFSEQ <- toTable(org.Hs.egREFSEQ)
-head(egREFSEQ, 3)
+#head(egREFSEQ)
 m <- match(y$genes$RefSeqID, egREFSEQ$accession)
 y$genes$EntrezGene <- egREFSEQ$gene_id[m]
 ```
 
-Ensuite, nous mettons à jour `symbol` en utilisant les *Entrez Gene ID*s.
 ```{r}
 egSYMBOL <- toTable(org.Hs.egSYMBOL)
-head(egSYMBOL, 3)
+#head(egSYMBOL)
 m <- match(y$genes$EntrezGene, egSYMBOL$gene_id)
 y$genes$Symbol <- egSYMBOL$symbol[m]
-head(y$genes, 3)
+genes<-head(y$genes)
+```
+```{r, echo = FALSE}
+knitr::kable(genes, format = "latex", booktabs = TRUE) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
 ```
 
-## Filtration 
-Plusieurs transcrits *RefSeq* correspondent au même gène. Nous ne gardons qu'un seul 
-transcrit *RefSeq* (celui avec le *count* le plus élevé) pour chaque gène.
+## Filtrage des gènes 
 ```{r}
 o <- order(rowSums(y$counts))
 y <- y[o,]
@@ -133,30 +130,25 @@ d <- duplicated(y$genes$Symbol)
 y <- y[!d,]
 nrow(y)
 ```
-Tous les transcrits se retrouvent au moins 50 fois dans au
-moins un des 6 cas, donc ce n'est pas nécessaire de filtrer les gènes qui 
-sont faiblement exprimés. 
 
-Ensuite, nous recalculons la taille du `library`.
 ```{r}
 y$samples$lib.size <- colSums(y$counts)
 ```
 
-Et nous utilisons les *Entrez Gene ID*s comme les noms de lignes.
 ```{r}
 rownames(y$counts) <- rownames(y$genes) <- y$genes$EntrezGene
 y$genes$EntrezGene <- NULL
 ```
 
 ## Normalisation
-La normalisation permet d'éliminer les effets techniques présents dans 
-les données afin de minimiser l'impact des biais techniques sur les résultats [@TMM1; @TMM2]. 
-Nous utilisons la fonction `normLibSizes()` qui utilise la normalisation *TMM* (*trimmed mean of M-values*) 
-pour tenir compte des différences de composition entre les *libraries*.
 
 ```{r}
 y <- normLibSizes(y)
-y$samples
+samples<-y$samples
+```
+```{r, echo = FALSE}
+knitr::kable(samples, format = "latex", booktabs = TRUE) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
 ```
 
 # Résultats et discussions
@@ -164,86 +156,69 @@ y$samples
 Résultats et discussions (2 à 3 pages)
 -->
 
-## Exploration des données
-Nous voulons voir s'il existe des valeurs aberrantes ou d'autres corrélations 
-dans notre échantillon. La fonction `plotMDS` produit un plot dans lequel les 
-distances entre les échantillons représentent approximativement les différences d'expression [@plotMDS].\
-Sur le plot (**figure \@ref(fig:fig1)**), la dimension 1 sépare les échantillons 
-tumoraux des échantillons normaux et la dimension 2 correspond au numéro du patient. 
-On peut observer que les échantillons non tumoraux sont proches les 
-uns des autres, tandis que les échantillons tumoraux sont plus espacés. Donc, les 
-échantillons tumoraux sont plus hétérogènes que les échantillons normaux.
-
-```{r fig1, fig.cap = "plotMDS(y)", fig.width = 4, fig.height = 4, fig.align='center'}
-plotMDS(y)
-```
-
-## Matrice de design
-## Analyse des données
-Nous voulons voir s'il existe des valeurs aberrantes ou d'autres corrélations 
-dans notre échantillon. La fonction `plotMDS` produit un plot dans lequel les 
-distances entre les échantillons représentent approximativement les différences d'expression [@plotMDS].
-```{r, out.width = "70%", fig.align='center'}
+## Data exploration
+```{r, out.width="75%"}
 plotMDS(y)
 ```
 
 ## Design matrix
-Ensuite, nous voulons tester l'expression différentielle entre les tissus 
-tumoraux et les tissus normaux chez les patients.
 ```{r}
-Patient <- factor(c(8, 8, 33, 33, 51, 51))
-Tissue <- factor(c("N", "T", "N", "T", "N", "T"))
-data.frame(Sample = colnames(y), Patient, Tissue)
+Patient <- factor(c(8,8,33,33,51,51))
+Tissue <- factor(c("N","T","N","T","N","T"))
+dfdm<-data.frame(Sample=colnames(y),Patient,Tissue)
 ```
-
-
+```{r, echo = FALSE}
+knitr::kable(dfdm, format = "latex", booktabs = TRUE) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
+```
 ```{r}
 design <- model.matrix(~Patient+Tissue)
 rownames(design) <- colnames(y)
-design
+```
+```{r, echo = FALSE}
+knitr::kable(design, format = "latex", booktabs = TRUE) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
 ```
 
-## Estimation de la dispersion
-Pour comprendre la variabilité biologique, nous estimons la dispersion globale du *dataset*.
-```{r fig.width = 4, fig.height = 4}
-y <- estimateDisp(y, design, robust = TRUE)
+## Dispersion Estimation
+```{r, out.width="75%"}
+y <- estimateDisp(y, design, robust=TRUE)
 y$common.dispersion
-```
-La racine carrée du *common dispersion*, `0.1613`, nous donne le BCV (biological coefficient of variation), `0.402`.
-```{r}
-sqrt(y$common.dispersion) # BCV
-```
-```{r plot2, fig.cap = "", out.width = "65%", fig.align='center'}
+
 plotBCV(y)
 ```
 
-
 ## Differential expression
-Nous utilison la fonction `glmFit` (fits negative binomial generalized log-linear model to each genes read count.)
 ```{r}
 fit <- glmFit(y, design)
 ```
-Ensuite, la fonction `glmLRT` est utilisée pour effecturer des 
-*likelihood ratio tests* pour les différences entre le tissu tumoral et le tissu normal.
+
 ```{r}
 lrt <- glmLRT(fit)
-```
-Nous utilisons la fonction `topTags` pour voir les résultats.
-```{r}
-topTags(lrt)
-```
-
+toptags <- topTags(lrt)
+```  
+  
+```{r, echo = FALSE}
+knitr::kable(toptags, format = "latex", booktabs = TRUE, digits = 30) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
+```  
+  
 ```{r}
 colnames(design)
 ```
 
 ```{r}
 o <- order(lrt$table$PValue)
-cpm(y)[o[1:10],]
+cpm<-cpm(y)[o[1:10],]
+```
+```{r, echo = FALSE}
+knitr::kable(cpm, format = "latex", booktabs = TRUE) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
 ```
 
-```{r, out.width = "75%", fig.align='center'}
+```{r, out.width="75%"}
 summary(decideTests(lrt))
+
 plotMD(lrt)
 abline(h=c(-1, 1), col="blue")
 ```
@@ -251,12 +226,22 @@ abline(h=c(-1, 1), col="blue")
 ## Gene Ontology Analysis
 ```{r}
 go <- goana(lrt)
-topGO(go, ont="BP", sort="Up", n=10, truncate=45)
-```
+upreg <- topGO(go, ont="BP", sort="Up", n=10, truncate=30)
+```  
+  
+```{r, echo = FALSE}
+knitr::kable(upreg, format = "latex", booktabs = TRUE, digits = 20) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
+```  
 
 ```{r}
 go <- goana(lrt)
-topGO(go, ont="BP", sort="Down", n=10, truncate=45)
+downreg <- topGO(go, ont="BP", sort="Down", n=10, truncate=30)
+```  
+
+```{r, echo = FALSE}
+knitr::kable(downreg, format = "latex", booktabs = TRUE, digits = 40) %>%
+          kable_styling(latex_options = c("scale_down","HOLD_position"))
 ```
 
 # Conclusion
