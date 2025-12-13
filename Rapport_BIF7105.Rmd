@@ -206,7 +206,7 @@ y$genes$EntrezGene <- NULL
 
 ## Normalisation
 La normalisation permet d'éliminer les effets techniques présents dans 
-les données afin de minimiser l'impact des biais techniques sur les résultats [@TMM1; @TMM2]. De même, nous pouvons nous assurer que les différences entre les échantillons sont dû à la variation biologique.
+les données afin de minimiser l'impact des biais techniques sur les résultats [@TMM]. De même, nous pouvons nous assurer que les différences entre les échantillons sont dû à la variation biologique.
 Nous utilisons la fonction `normLibSizes()` qui utilise la normalisation TMM (*trimmed mean of M-values*) 
 pour tenir compte des différences de composition entre les librairies. Cette méthode de normalisation permet la comparaison entre les échantillons qui ont des couvertures différentes. Elle modifie la taille des librairies, et non les données de comptages. Pour se faire, elle émet l'hypothèse *la plupart des gènes ne sont pas exprimés différentiellement*. Ensuite, elle choisit un échantillon de référence, et calcule le facteur TMM pour chacun des autres échantillons. Un facteur *TMM < 1* indique qu'un petit nombre de gènes hautement exprimés contribuent largement à la taille de la librairie, donnant moins de valeur aux autres gènes du même groupe. Pour contrer cette partialité, elle diminuera la taille de la librairie. Puis un facteur *TMM > 1* augmente la taille [@edgeRUsersGuide].
 
