@@ -68,18 +68,18 @@ L’arrivée du séquençage à haut débit, communément connu sous le nom de N
    
 **edgeR** a été le premier outil à utiliser des modèles linéaires généralisés binomiaux négatifs (BN) afin de modéliser les comptages de lecture dans la recherche du génome. En effet, puisque ces derniers ont souvent une variance beaucoup plus grande que la moyenne, il faut un paramètre de dispersion qui permet la relation *variance > moyenne*. La régression BN est donc un meilleur modèle statistique pour analyser des données de comptages qui représentent une surdispersion. De plus, **edgeR** tient compte de deux variations dans les expérimentations de séquençage de l’ARN. La première est la variation biologique entre les différents groupes ou cellules échantillonnés qui suit une loi de Gamma. La deuxième, la variation technique, incluant les erreurs de mesure et de séquençage, qui suit une loi de Poisson. Ensemble, les comptages de lecture suivent une loi de Gamma-Poisson, c’est-à-dire une loi binomiale négative [@edgeRv4]. 
    
-Dans cette revue d'outil, les capacités de modélisation linéaires généralisés de **edgeR** seront démontrés avec une analyse différentielle d'expréssion de gènes entre des transcrits séquencés de cellules cancéreuses et de cellules normales issus du séquençage de l'ARN. L'utilisation du package ainsi que ses différentes fonctions et modèles statistiques pour la préparation de données et l'analyse différentielle seront présentés.  
+Dans cette revue d'outil, les capacités de modélisation linéaires généralisées de **edgeR** seront démontrées avec une analyse différentielle d’expression de gènes entre des transcrits séquencés de cellules cancéreuses et de cellules normales issus du séquençage de l'ARN. L'utilisation du package ainsi que ses différentes fonctions et modèles statistiques pour la préparation de données et l'analyse différentielle seront présentés.  
 
 # Méthodologie
 <!-- 
 Méthodologie (2 à 3 pages)
 -->
 ## Introduction
-Pour démontrer les capacités de **edgeR** et de son utilisation de modèles linéaires généralisés pour l'analyse de données, deux types de tissus seront étudiés chez trois patients: les tissus carcinomes épidermoïdes buccaux et les tissus normaux qui leur correspondent. Ces données proviennent d'une expérience de séquençage d'ARN par paires entreprie par Tuch et al. en 2010.[@oralCarcinoma]  
+Pour démontrer les capacités de **edgeR** et de son utilisation de modèles linéaires généralisés pour l'analyse de données, deux types de tissus seront étudiés chez trois patients: les tissus carcinomes épidermoïdes buccaux et les tissus normaux qui leur correspondent. Ces données proviennent d'une expérience de séquençage d'ARN par paires entreprise par Tuch et al. en 2010.[@oralCarcinoma]  
 Le but de l'analyse est de trouver les gènes qui sont différentiellement exprimés entre les cellules cancéreuses et les cellules normales.  
 
 ## Téléchargement des données
-Nous commonçons par charger les *librairies* pertinentes.
+Nous commençons par charger les *librairies* pertinentes.
 
 ```{r message=FALSE, size="small"}
 library(org.Hs.eg.db)
@@ -206,9 +206,9 @@ y$genes$EntrezGene <- NULL
 
 ## Normalisation
 La normalisation permet d'éliminer les effets techniques présents dans 
-les données afin de minimiser l'impact des biais techniques sur les résultats [@TMM]. De même, nous pouvons nous assurer que les différences entre les échantillons sont dû à la variation biologique.
+les données afin de minimiser l'impact des biais techniques sur les résultats [@TMM]. De même, nous pouvons nous assurer que les différences entre les échantillons sont dues à la variation biologique.
 Nous utilisons la fonction `normLibSizes()` qui utilise la normalisation TMM (*trimmed mean of M-values*) 
-pour tenir compte des différences de composition entre les librairies. Cette méthode de normalisation permet la comparaison entre les échantillons qui ont des couvertures différentes. Elle modifie la taille des librairies, et non les données de comptages. Pour se faire, elle émet l'hypothèse *la plupart des gènes ne sont pas exprimés différentiellement*. Ensuite, elle choisit un échantillon de référence, et calcule le facteur TMM pour chacun des autres échantillons. Un facteur *TMM < 1* indique qu'un petit nombre de gènes hautement exprimés contribuent largement à la taille de la librairie, donnant moins de valeur aux autres gènes du même groupe. Pour contrer cette partialité, elle diminuera la taille de la librairie. Puis un facteur *TMM > 1* augmente la taille [@edgeRUsersGuide].
+pour tenir compte des différences de composition entre les librairies. Cette méthode de normalisation permet la comparaison entre les échantillons qui ont des couvertures différentes. Elle modifie la taille des librairies, et non les données de comptages. Pour se faire, elle émet l'hypothèse *la plupart des gènes ne sont pas exprimés différentiellement*. Ensuite, elle choisit un échantillon de référence, et calcule le facteur TMM pour chacun des autres échantillons. Un facteur *TMM < 1* indique qu'un petit nombre de gènes hautement exprimés contribue largement à la taille de la librairie, donnant moins de valeur aux autres gènes du même groupe. Pour contrer cette partialité, elle diminuera la taille de la librairie. Puis un facteur *TMM > 1* augmente la taille [@edgeRUsersGuide].
 
 ```{r, size="small"}
 y <- normLibSizes(y)
@@ -243,7 +243,7 @@ plotMDS(y, cex = 0.7, cex.lab = 0.7, cex.axis = 0.7)
 
 ## Matrice de design
 Ensuite, nous voulons tester l'expression différentielle entre les tissus 
-tumoraux et les tissus normaux chez les patients. Ici, nous avons un modèle linéaire additif. Le facteur de blocage est le `Patient`, comme ça nous pouvons isoler les effets dûs au facteur `Tissue`. Les différences sont dûs aux tissus, et non aux patients. Pour se faire, il faut d'abord créer une matrice de design selon le design expérimental.     
+tumoraux et les tissus normaux chez les patients. Ici, nous avons un modèle linéaire additif. Le facteur de blocage est le `Patient`, comme ça nous pouvons isoler les effets dus au facteur `Tissue`. Les différences sont dues aux tissus, et non aux patients. Pour se faire, il faut d'abord créer une matrice de design selon le design expérimental.     
 
 ```{r, size="small"}
 Patient <- factor(c(8, 8, 33, 33, 51, 51))
@@ -304,13 +304,13 @@ fit <- glmFit(y, design)
 ```   
 
 Ensuite, la fonction `glmLRT` est utilisée pour effectuer des 
-tests de rapport de vraisemblance pour identifier les gènes significatifs. Il fait un test pour l'effet *tissus tumoreux vs normaux*.   
+tests de rapport de vraisemblance pour identifier les gènes significatifs. Il fait un test pour l'effet *tissus tumoraux vs normaux*.   
 
 ```{r, size="small"}
 lrt <- glmLRT(fit)
 ```   
 
-Nous utilisons la fonction `topTags` pour voir les résultats les plus significatifs, ceux dont l'effet testé précedemment est plus grand. Un haut `LR` (*Likelihood Ratio*) et une petite valeur-p indique que l'hypothèse nulle (aucun gène DE entre les deux types de tissus) peut être rejetée. Un petit `FDR` (*False Discovery Rate*) indique qu'il y a de très petites chances d'obtenir de faux positifs. En effet, tous les gènes qui se retrouvent dans le tableau `topTags` ont un `FDR` pratiquement nul. Donc, notre rejet de l'hypothèse nulle n'est pas un faux positif [@edgeRUsersGuide.  
+Nous utilisons la fonction `topTags` pour voir les résultats les plus significatifs, ceux dont l'effet testé précédemment est plus grand. Un haut `LR` (*Likelihood Ratio*) et une petite valeur-p indique que l'hypothèse nulle (aucun gène DE entre les deux types de tissus) peut être rejetée. Un petit `FDR` (*False Discovery Rate*) indique qu'il y a de très petites chances d'obtenir de faux positifs. En effet, tous les gènes qui se retrouvent dans le tableau `topTags` ont un `FDR` pratiquement nul. Donc, notre rejet de l'hypothèse nulle n'est pas un faux positif [@edgeRUsersGuide].  
 
 ```{r, size="small"}
 tt <- topTags(lrt, n = 10)$table
@@ -363,7 +363,7 @@ abline(h=c(-1, 1), col="blue")
 
 ## Analyse d’ontologie des gènes
 Nous réalisons une analyse d'ontologie génique axée sur l'ontologie des 
-processus biologiques (BP). Les gènes regulé à la hausse dans les tumeurs 
+processus biologiques (BP). Les gènes régulés à la hausse dans les tumeurs 
 ont tendance à être associés au développement tissulaire.
 
 ```{r, size="small"}
@@ -376,7 +376,7 @@ knitr::kable(upreg, format = "latex", booktabs = TRUE, digits = 20) %>%
           kable_styling(latex_options = c("scale_down","HOLD_position"))
 ``` 
 
-Les gènes regulé à la basse dans les tumeurs 
+Les gènes régulés à la baisse dans les tumeurs 
 ont tendance à être associés au développement musculaire.   
 
 ```{r, size="small"}
@@ -394,7 +394,7 @@ knitr::kable(downreg, format = "latex", booktabs = TRUE, digits = 40) %>%
 Conclusion (1/2 page)
 -->     
   
-Pour conclure, nous avons démontré que l'outil **edgeR** est important pour l'analyse de données omiques issus du séquençage à haut débit, surtout ceux issus du séquençage de l'ARN. L’expression différentielle entre les tissus carcinomes épidermoïdes buccaux et les tissus normaux a été établi, ainsi qu'une analyse d'ontologie des gènes. Bien que notre analyse soit basé sur uniquement un facteur, l'approche de modèle linéaire généralisé de l'outil permet des analyses beaucoup plus complexes, comme les expérimentations à facteurs multiples et les analyses de series temporelles par exemple. De plus, **edgeR** a été le premier à utiliser la loi binomiale négative pour représenter les données de comptages, ce qui lui permet de faire des bonnes analyses, autant pour les petits jeux de données comme le nôtre que les gros [@edgeRv4]. Facile et simple d'approche, cet outil nous a permit de mieux comprendre les différences entre deux tissus et d'en tirer des conclusions significatives. **edgeR** est et continuera à être un outil indispensable dans la recherche génomique et de biologie moléculaire.
+Pour conclure, nous avons démontré que l'outil **edgeR** est important pour l'analyse de données omiques issus du séquençage à haut débit, surtout ceux issus du séquençage de l'ARN. L’expression différentielle entre les tissus carcinomes épidermoïdes buccaux et les tissus normaux a été établie, ainsi qu'une analyse d'ontologie des gènes. Bien que notre analyse soit basé sur uniquement un facteur, l'approche de modèle linéaire généralisé de l'outil permet des analyses beaucoup plus complexes, comme les expérimentations à facteurs multiples et les analyses de séries temporelles par exemple. De plus, **edgeR** a été le premier à utiliser la loi binomiale négative pour représenter les données de comptages, ce qui lui permet de faire des bonnes analyses, autant pour les petits jeux de données comme le nôtre que les gros [@edgeRv4]. Facile et simple d'approche, cet outil nous a permit de mieux comprendre les différences entre deux tissus et d'en tirer des conclusions significatives. **edgeR** est et continuera à être un outil indispensable dans la recherche génomique et de biologie moléculaire.
 
 # Références
 <!-- 
