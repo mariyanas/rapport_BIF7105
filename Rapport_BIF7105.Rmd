@@ -236,9 +236,9 @@ uns des autres, tandis que les échantillons tumoraux sont plus espacés. Donc, 
 échantillons tumoraux sont plus hétérogènes que les échantillons normaux. 
 Même si les échantillons ne sont pas nombreux, il est évident que les tissus tumoraux et normaux ne se mélangent pas. Il ne semble pas y avoir de donnée aberrante.
 
-```{r fig1, fig.cap = "plotMDS(y)", fig.width = 3, fig.height = 3, fig.align='center', size="small"}
-par(mar = c(4, 4, 0.5, 1))
-plotMDS(y)
+```{r fig1, fig.cap = "plotMDS(y)", fig.width = 3, fig.height = 2.5, fig.align='center', size="small"}
+par(mar = c(4, 4, 0, 1))
+plotMDS(y, cex = 0.7, cex.lab = 0.7, cex.axis = 0.7)
 ```
 
 ## Matrice de design
@@ -355,9 +355,9 @@ knitr::kable(t1, format = "latex", booktabs = TRUE) %>%
 
 Le log fold change mesure le changement de l’expression des gènes entre deux conditions (tumeur vs normal). Il est le ratio logarithmique en base 2 du taux d'expression d'un gène donné (condition tumorale/condition normale). Par exemple, Un `LFC` de 1 indique une augmentation de l'expression de 2 fois alors qu'un `LFC` de -1 indique une diminution de l'expression de moitié. Ici, les gènes qui sont déterminés par leur `CPM` ayant un `LFC` entre -1 et 1 ne présentent pas assez de changements pour être significatifs. Ils sont représentés par des points noirs. Les gènes ayant un `LFC` > 1 sont significatifs et sont régulés à la hausse (points rouges). Les gènes ayant un `LFC` < 1 sont significatifs et sont régulés à la baisse (points bleus) [@edgeRUsersGuide].    
   
-```{r, fig3, fig.cap = "plotMD(lrt)", fig.width = 3.5, fig.height = 3.5, fig.align='center', size="small"}
+```{r, fig3, fig.cap = "plotMD(lrt)", fig.width = 4.5, fig.height = 3.5, fig.align='center', size="small"}
 par(mar = c(4, 4, 1.5, 1))
-plotMD(lrt)
+plotMD(lrt, cex = 0.7, cex.lab = 0.7, cex.axis = 0.7, cex.main = 0.8)
 abline(h=c(-1, 1), col="blue")
 ```
 
